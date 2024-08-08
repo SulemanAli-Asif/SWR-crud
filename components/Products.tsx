@@ -39,7 +39,6 @@ const Products = () => {
       if (!res.ok) {
         throw new Error("Failed to delete the product");
       }
-      // Revalidate data
       mutate();
     } catch (err) {
       console.error("Error deleting product: ", err);

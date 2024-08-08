@@ -6,7 +6,6 @@ const fetcher = async (
   url: string,
   { arg, method }: { arg: any; method: string }
 ) => {
-  console.log("Fetcher method: ", method);
   const res = await fetch(url, {
     method: arg.method,
     headers: {
@@ -49,7 +48,6 @@ const AddProducts: React.FC<AddProductsProps> = ({
     quantity: "",
     inStock: false,
   });
-  console.log("product: ", product);
 
   useEffect(() => {
     if (product && isEditing) {
@@ -100,11 +98,10 @@ const AddProducts: React.FC<AddProductsProps> = ({
         ...formData,
         quantity: parseInt(formData.quantity),
       };
-      console.log("data is: ", data);
       const method: string = product ? "PATCH" : "POST";
       await trigger({ arg: data, method });
 
-      mutate(); // Revalidate the list after adding a new product
+      mutate();
       resetForm();
       showButton(false);
     } catch (err) {}
