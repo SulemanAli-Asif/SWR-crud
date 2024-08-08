@@ -25,21 +25,23 @@ export const PATCH = async (
   { params }: { params: { id: string } }
 ) => {
   const { name, category, inStock, quantity } = await req.json();
-
+  console.log("req: ", req);
   try {
     const existingProduct = await prisma.products.findUnique({
       where: { id: parseInt(params.id) },
     });
+    console.log("existingProduct: ", existingProduct);
     if (!existingProduct) {
       new Response("Prompt not found", { status: 404 });
     }
 
-    const updatedPrompt = await prisma.products.update({
+    const updatedProduct = await prisma.products.update({
       where: { id: parseInt(params.id) },
       data: { name, category, inStock, quantity },
     });
 
-    return new Response(JSON.stringify(updatedPrompt), { status: 200 });
+    console.log("updatedProduct: ", updatedProduct);
+    return new Response(JSON.stringify(updatedProduct), { status: 200 });
   } catch (err) {
     return new Response("Failed to fetch response", { status: 500 });
   }

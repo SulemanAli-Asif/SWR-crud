@@ -6,13 +6,10 @@ import AddProducts from "./AddProducts";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
-interface AddProductsProps {
-  showButton: (value: boolean) => void;
-}
-
 const Products = () => {
   const [showAddProduct, setShowAddProduct] = useState(false);
   const [productToEdit, setProductToEdit] = useState<any>(null);
+  const [isEditing, setIsEditing] = useState(false);
   const {
     data: products,
     error,
@@ -20,10 +17,17 @@ const Products = () => {
     mutate,
   } = useSWR("/api/products", fetcher);
   if (isLoading) return <div>Loading...</div>;
-  if (error) return <div>Error loading products</div>;
+  if (error) return <div>Please wait ...</div>;
 
   const handleEdit = (product: any) => {
+    setIsEditing(true);
     setProductToEdit(product);
+    setShowAddProduct(true);
+  };
+
+  const handleAddNew = () => {
+    setProductToEdit(null);
+    setIsEditing(false);
     setShowAddProduct(true);
   };
 
@@ -50,7 +54,7 @@ const Products = () => {
       >
         <h3>Products</h3>
         <div className={`productsTop `}>
-          <button onClick={() => setShowAddProduct(!showAddProduct)}>
+          <button onClick={handleAddNew}>
             {showAddProduct ? "Cancel" : "Add a product"}
           </button>
           <button>All Products</button>
@@ -73,6 +77,7 @@ const Products = () => {
         <div className="popup-overlay">
           <div className="popup">
             <AddProducts
+              isEditing={isEditing}
               showButton={setShowAddProduct}
               product={productToEdit}
             />

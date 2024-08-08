@@ -1,34 +1,78 @@
-import React, { FormEvent, ChangeEvent, useState } from "react";
+import React, { FormEvent, ChangeEvent, useState, useEffect } from "react";
 import useSWRMutation from "swr/mutation";
 import useSWR from "swr";
 
-const fetcher = async (url: string, { arg }: any) => {
-  console.log("Fetcher product: ", arg);
+const fetcher = async (
+  url: string,
+  { arg, method }: { arg: any; method: string }
+) => {
+  console.log("Fetcher method: ", method);
   const res = await fetch(url, {
-    method: "POST",
+    method: arg.method,
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify(arg),
+    body: JSON.stringify(arg.arg),
   });
 
   if (!res.ok) {
-    throw new Error("Failed to create a new product");
+    throw new Error(
+      `Failed to ${method === "PATCH" ? "update" : "create"} the product`
+    );
   }
 
   return res.json();
 };
+interface Products {
+  id: number;
+  name: string;
+  category: string;
+  price: number;
+  quantity: number;
+  inStock: boolean;
+}
 
-const AddProducts = ({ showButton }: any) => {
+interface AddProductsProps {
+  showButton: any;
+  product: Products;
+  isEditing: boolean;
+}
+
+const AddProducts: React.FC<AddProductsProps> = ({
+  showButton,
+  product,
+  isEditing,
+}: AddProductsProps) => {
   const [formData, setFormData] = useState({
     name: "",
     category: "",
-    price: "",
     quantity: "",
     inStock: false,
   });
+  console.log("product: ", product);
 
-  const { trigger } = useSWRMutation("/api/products/new", fetcher);
+  useEffect(() => {
+    if (product && isEditing) {
+      setFormData({
+        name: product.name,
+        category: product.category,
+        quantity: product.quantity.toString(),
+        inStock: product.inStock,
+      });
+    } else {
+      setFormData({
+        name: "",
+        category: "",
+        quantity: "",
+        inStock: false,
+      });
+    }
+  }, [product, isEditing]);
+
+  const { trigger } = useSWRMutation(
+    product ? `/api/products/${product.id}` : "/api/products/new",
+    fetcher
+  );
   const { mutate } = useSWR("/api/products", fetcher);
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -39,18 +83,29 @@ const AddProducts = ({ showButton }: any) => {
     });
   };
 
+  const resetForm = () => {
+    setFormData({
+      name: "",
+      category: "",
+      quantity: "",
+      inStock: false,
+    });
+  };
+
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     try {
-      const data = {
+      const data: any = {
         ...formData,
         quantity: parseInt(formData.quantity),
       };
       console.log("data is: ", data);
-      await trigger(data);
-      mutate(); // Revalidate the list after adding a new product
+      const method: string = product ? "PATCH" : "POST";
+      await trigger({ arg: data, method });
 
+      mutate(); // Revalidate the list after adding a new product
+      resetForm();
       showButton(false);
     } catch (err) {}
   };
@@ -102,7 +157,9 @@ const AddProducts = ({ showButton }: any) => {
             onChange={handleChange}
           />
         </label>
-        <button type="submit">Add Product</button>
+        <button type="submit">
+          {product ? "Edit Product" : "Add Product"}
+        </button>
       </form>
     </div>
   );
